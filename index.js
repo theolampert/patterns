@@ -28,11 +28,6 @@ var GenerateImage = (function () {
 	];
 
 	/*
-	** Array to store used colors when generating a pattern;
-	*/
-	this.colorsReduced = [];
-
-	/*
 	** Returns random item from an array;
 	** @Param: Array
 	*/
@@ -42,16 +37,10 @@ var GenerateImage = (function () {
 	};
 
 	/*
-	** Make sure not to use the same color
-	*/
-	this.unique = () => _.difference(this.colors, this.colorsReduced);
-
-
-	/*
 	** Generate Shapes for the pattern tile
 	*/
 	this.square = function(ctx, position, size){
-		ctx.fillStyle = this.getRandArrItem(unique());
+		ctx.fillStyle = this.getRandArrItem(this.colors);
 		ctx.beginPath();
 		ctx.rect(position.x, position.y, (size * 2), (size * 2));
 		ctx.closePath();
@@ -59,7 +48,7 @@ var GenerateImage = (function () {
 	};
 
 	this.circle = function(ctx, position, radius)  {
-		ctx.fillStyle = this.getRandArrItem(unique());
+		ctx.fillStyle = this.getRandArrItem(this.colors);
 		ctx.beginPath();
 		ctx.arc(position.x, position.y, radius, 0, 4 * Math.PI, false);
 		ctx.closePath();
@@ -71,7 +60,7 @@ var GenerateImage = (function () {
 		ctx.lineWidth = 3;
 		ctx.moveTo(position.x,position.y);
 		ctx.lineTo(50,50);
-		ctx.strokeStyle = this.getRandArrItem(unique());
+		ctx.strokeStyle = this.getRandArrItem(this.colors);
 		ctx.stroke();
 		ctx.closePath();
 	};
@@ -92,7 +81,7 @@ var GenerateImage = (function () {
 		** Fill the tile's background with a random color
 		*/
 		ctx.beginPath();
-		ctx.fillStyle = this.getRandArrItem(this.unique());
+		ctx.fillStyle = this.getRandArrItem(this.colors);
 		ctx.fillRect(0,0,size.width, size.height);
 		ctx.closePath();
 		ctx.fill();
