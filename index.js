@@ -12,11 +12,12 @@ var _ = require('lodash'),
 /*
 ** Generates an image with a random pattern.
 */
-var GenerateImage = (function () {  
+var GenerateImage = function() {  
+	var self = this;
 	/*
 	** Array of colors to use
 	*/
-	this.colors = [
+	self.colors = [
 		'#241338',
 		'#E4C46C',
 		'#DC211E',
@@ -31,7 +32,7 @@ var GenerateImage = (function () {
 	** Returns random item from an array;
 	** @Param: Array
 	*/
-	this.getRandArrItem = (arr) => {
+	self.getRandArrItem = (arr) => {
 		var i = Math.floor(Math.random() * arr.length);
 		return arr[i];
 	};
@@ -39,28 +40,28 @@ var GenerateImage = (function () {
 	/*
 	** Generate Shapes for the pattern tile
 	*/
-	this.square = function(ctx, position, size){
-		ctx.fillStyle = this.getRandArrItem(this.colors);
+	self.square = function(ctx, position, size){
+		ctx.fillStyle = self.getRandArrItem(self.colors);
 		ctx.beginPath();
 		ctx.rect(position.x, position.y, (size * 2), (size * 2));
 		ctx.closePath();
 		ctx.fill();
 	};
 
-	this.circle = function(ctx, position, radius)  {
-		ctx.fillStyle = this.getRandArrItem(this.colors);
+	self.circle = function(ctx, position, radius)  {
+		ctx.fillStyle = self.getRandArrItem(self.colors);
 		ctx.beginPath();
 		ctx.arc(position.x, position.y, radius, 0, 4 * Math.PI, false);
 		ctx.closePath();
 		ctx.fill();
 	};
 	
-	this.line = function(ctx, position, radius){
+	self.line = function(ctx, position, radius){
 		ctx.beginPath();
 		ctx.lineWidth = 3;
 		ctx.moveTo(position.x,position.y);
 		ctx.lineTo(50,50);
-		ctx.strokeStyle = this.getRandArrItem(this.colors);
+		ctx.strokeStyle = self.getRandArrItem(self.colors);
 		ctx.stroke();
 		ctx.closePath();
 	};
@@ -69,7 +70,7 @@ var GenerateImage = (function () {
 	/*
 	** Generate 2x2 pattern tile
 	*/
-	this.genTile = function(size){
+	self.genTile = function(size){
 		/*
 		** Create new canvas object for the pattern tile
 		*/
@@ -81,7 +82,7 @@ var GenerateImage = (function () {
 		** Fill the tile's background with a random color
 		*/
 		ctx.beginPath();
-		ctx.fillStyle = this.getRandArrItem(this.colors);
+		ctx.fillStyle = self.getRandArrItem(self.colors);
 		ctx.fillRect(0,0,size.width, size.height);
 		ctx.closePath();
 		ctx.fill();
@@ -90,7 +91,7 @@ var GenerateImage = (function () {
 		** Returns a random shape
 		*/
 		var randShape = function(){
-			return this.getRandArrItem(['square', 'circle', 'line']);
+			return self.getRandArrItem(['square', 'circle', 'line']);
 		};
 
 		/*
@@ -104,7 +105,7 @@ var GenerateImage = (function () {
 		];
 
 		arrayMap.forEach(function(item, i){
-			this[randShape()](ctx, {
+			self[randShape()](ctx, {
 				x: arrayMap[i][0] * (size.width / arrayMap.length), 
 				y: arrayMap[i][1] * (size.width / arrayMap.length)
 			}, 10);		
@@ -116,13 +117,13 @@ var GenerateImage = (function () {
 	/*
 	** Generate the png file and write to disk
 	*/
-	this.genPng = function(outputSize, fileDir){
+	self.genPng = function(outputSize, fileDir){
 		var canvas = new Canvas(outputSize.w, outputSize.h),
 			out = fs.createWriteStream(__dirname + fileDir),
 			stream = canvas.pngStream();
 			ctx = canvas.getContext('2d');
 
-		var pattern = ctx.createPattern(this.genTile({ 
+		var pattern = ctx.createPattern(self.genTile({ 
 			height: 100, 
 			width: 100 
 		}).canvas, 'repeat');
@@ -136,6 +137,6 @@ var GenerateImage = (function () {
 		});
 	}
 
-	this.genPng({w:1000, h:700}, '/output.png');
+}
 
-})();
+module.exports = GenerateImage;
