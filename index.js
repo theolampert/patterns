@@ -1,6 +1,4 @@
-var _ = require('lodash'),
-	fs = require('fs'),
-	Canvas = require('canvas'),
+var Canvas = require('canvas'),
 	Image = Canvas.Image;
 
 /*
@@ -13,11 +11,10 @@ var _ = require('lodash'),
 ** Generates an image with a random pattern.
 */
 var GenerateImage = function() {  
-	var self = this;
 	/*
 	** Array of colors to use
 	*/
-	self.colors = [
+	this.colors = [
 		'#241338',
 		'#E4C46C',
 		'#DC211E',
@@ -32,7 +29,7 @@ var GenerateImage = function() {
 	** Returns random item from an array;
 	** @Param: Array
 	*/
-	self.getRandArrItem = (arr) => {
+	this.getRandArrItem = (arr) => {
 		var i = Math.floor(Math.random() * arr.length);
 		return arr[i];
 	};
@@ -40,28 +37,35 @@ var GenerateImage = function() {
 	/*
 	** Generate Shapes for the pattern tile
 	*/
-	self.square = function(ctx, position, size){
-		ctx.fillStyle = self.getRandArrItem(self.colors);
+	this.square = (ctx, pos, size, gridSet, offset) => {
+		ctx.fillStyle = this.getRandArrItem(this.colors);
 		ctx.beginPath();
-		ctx.rect(position.x, position.y, (size * 2), (size * 2));
+		ctx.rect(
+			((size.w / gridSet) * pos.x) + (offset / 2), 
+			((size.h / gridSet) * pos.y) + (offset / 2), 
+			(size.h / gridSet - offset), 
+			(size.h / gridSet - offset)); //Deliberate
 		ctx.closePath();
-		ctx.fill();
+		ctx.fill();		
 	};
 
-	self.circle = function(ctx, position, radius)  {
-		ctx.fillStyle = self.getRandArrItem(self.colors);
+	this.circle = (ctx, pos, size, gridSet, offset) => {
+		ctx.fillStyle = this.getRandArrItem(this.colors);
 		ctx.beginPath();
-		ctx.arc(position.x, position.y, radius, 0, 4 * Math.PI, false);
+		ctx.arc(
+			((size.w / gridSet) * pos.x) + (size.w / 4), 
+			((size.h / gridSet) * pos.y)+ (size.h / 4), 
+			((size.w / 4) - (offset / 2)), 0, 4 * Math.PI, false);
 		ctx.closePath();
 		ctx.fill();
 	};
 	
-	self.line = function(ctx, position, radius){
+	this.line = (ctx, position, radius) => {
 		ctx.beginPath();
-		ctx.lineWidth = 3;
+		ctx.lineWidth = 2;
 		ctx.moveTo(position.x,position.y);
-		ctx.lineTo(50,50);
-		ctx.strokeStyle = self.getRandArrItem(self.colors);
+		ctx.lineTo(position.y,position.x);
+		ctx.strokeStyle = this.getRandArrItem(this.colors);
 		ctx.stroke();
 		ctx.closePath();
 	};
@@ -70,73 +74,68 @@ var GenerateImage = function() {
 	/*
 	** Generate 2x2 pattern tile
 	*/
-	self.genTile = function(size){
+	this.genTile = (size) => {
+		
 		/*
 		** Create new canvas object for the pattern tile
 		*/
-		var canvas = new Canvas(size.width, size.height),
+		const canvas = new Canvas(size.width, size.height),
 			stream = canvas.pngStream(),
 			ctx = canvas.getContext('2d');
+
+		/*
+		** Returns a random shape
+		*/
+		const randShape = () => {
+			return this.getRandArrItem(['square', 'circle']);
+		};
 
 		/*
 		** Fill the tile's background with a random color
 		*/
 		ctx.beginPath();
-		ctx.fillStyle = self.getRandArrItem(self.colors);
+		ctx.fillStyle = this.getRandArrItem(this.colors);
 		ctx.fillRect(0,0,size.width, size.height);
 		ctx.closePath();
 		ctx.fill();
 
-		/*
-		** Returns a random shape
-		*/
-		var randShape = function(){
-			return self.getRandArrItem(['square', 'circle', 'line']);
-		};
+		const offset = 15;
+		const gridSet = 2;
 
-		/*
-		** 2x2 map for the pattern
-		*/
-		var arrayMap = [
-			[1,1],
-			[3,1],
-			[1,3],
-			[3,3],
-		];
+		for (var y = 0; y < gridSet; y++) {
+			for (var x = 0; x < gridSet; x++) {
+				this[randShape()](ctx, {x:x,y:y}, {w:size.width, h:size.height}, gridSet, offset);
+			}
+		}
 
-		arrayMap.forEach(function(item, i){
-			self[randShape()](ctx, {
-				x: arrayMap[i][0] * (size.width / arrayMap.length), 
-				y: arrayMap[i][1] * (size.width / arrayMap.length)
-			}, 10);		
-		});
-
-		return ctx
+		return ctx;
 	};
 	
 	/*
-	** Generate the png file and write to disk
+	** Generate a buffer
 	*/
-	self.genPng = function(outputSize, fileDir){
+	this.genDataURL = function(outputSize, callback, colors){
 		var canvas = new Canvas(outputSize.w, outputSize.h),
-			out = fs.createWriteStream(__dirname + fileDir),
-			stream = canvas.pngStream();
 			ctx = canvas.getContext('2d');
 
-		var pattern = ctx.createPattern(self.genTile({ 
-			height: 100, 
-			width: 100 
+		var pattern = ctx.createPattern(this.genTile({ 
+			height: (outputSize.h / 10), 
+			width: (outputSize.w / 10) 
 		}).canvas, 'repeat');
 		
 		ctx.rect(0,0, outputSize.w, outputSize.h);
 		ctx.fillStyle = pattern;
 		ctx.fill();
-		
-		stream.on('data', function(chunk){
-			out.write(chunk);
+
+		canvas.toBuffer((err, buf) => {
+			if(err){
+				console.log(err);
+			}
+			else {
+				callback(buf);
+			}
 		});
 	}
-
 }
 
 module.exports = GenerateImage;
